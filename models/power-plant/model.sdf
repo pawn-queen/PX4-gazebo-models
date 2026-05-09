@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<sdf version="1.11">
+  <model name="power-plant">
+    <static>true</static>
+
+    <link name="link">
+
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://power-plant/meshes/power-plant.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.7 0.7 0.7 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+        </material>
+      </visual>
+
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>20 20 10</size>
+          </box>
+        </geometry>
+      </collision>
+
+    </link>
+  </model>
+</sdf>

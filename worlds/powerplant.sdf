@@ -1,0 +1,282 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<sdf version="1.11">
+  <world name="powerplant">
+  <physics type="ode">
+      <max_step_size>0.004</max_step_size><!--每一步最大仿真步长0.004s-->
+      <real_time_factor>1.0</real_time_factor><!--实时倍率目标-->
+      <real_time_update_rate>250</real_time_update_rate><!--每秒更新250次-->
+      <!--这里real_time_update_rate*max_step_size=1，即是理想状态下一秒仿真一秒真实时间。-->
+    </physics>
+    <!--这里参考官方文档讲解https://gazebosim.org/api/sim/9/createsystemplugins.html-->
+    <!--这里的插件的源码请查看https://github.com/gazebosim/gz-sim/tree/gz-sim10/src/systems-->
+    <!-- 简单来讲调用插件的方式<plugin
+      filename="SampleSystem"
+      name="sample_system::SampleSystem">
+    </plugin>-->
+    <include>
+      <uri>model://land_zone</uri>
+      <name>land_zone_1</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+    <plugin name="gz::sim::systems::Physics" filename="gz-sim-physics-system"/>
+    <plugin name="gz::sim::systems::UserCommands" filename="gz-sim-user-commands-system"/>
+    <plugin name="gz::sim::systems::SceneBroadcaster" filename="gz-sim-scene-broadcaster-system"/>
+    <plugin name="gz::sim::systems::Contact" filename="gz-sim-contact-system"/>
+    <plugin name="gz::sim::systems::Imu" filename="gz-sim-imu-system"/><!--这里开启IMU传感器系统，以便后面集成-->
+    <plugin name="gz::sim::systems::AirPressure" filename="gz-sim-air-pressure-system"/><!--气压计-->
+    <plugin name="gz::sim::systems::ApplyLinkWrench" filename="gz-sim-apply-link-wrench-system"/>
+    <plugin name="gz::sim::systems::NavSat" filename="gz-sim-navsat-system"/>
+    <plugin name="gz::sim::systems::Sensors" filename="gz-sim-sensors-system">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <!--这里开始定义gazebo界面应该长什么样子-->
+    <!--提供以下控件如3D视图、图、仪表盘等， 并且可以一起在方便的统一界面中使用。-->
+    <!--https://gazebosim.org/api/gui/9/config.html-->
+    <!--这里关于如何进行gui配置有如下
+      <property type="bool" key="showTitleBar">false</property>
+      <property type="string" key="state">docked</property>
+      QT强类型需规定gui的类型如showTitleBar只有两个类型即开启和关闭，则规定类型为bool类型
+      state为string字符串类型，下文中需要参与运算的weight等则需要规定为浮点数类型
+       -->
+       <!--https://gazebosim.org/api/sim/8/namespacegz_1_1sim.html在这其中你想加入什么均可以用以下类似的方式添加-->
+    <gui fullscreen="false">
+      <!-- 3D scene -->
+      <plugin filename="MinimalScene" name="3D View">
+      <!--官方插件文档https://gazebosim.org/api/gui/8/classplugins_1_1MinimalScene.html-->
+      <!--创建凉亭渲染场景和用户摄像机。可以用鼠标绕场景旋转摄像机。用其他插件来管理场景中的对象。-->
+        <gz-gui>
+          <title>3D View</title>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.8 0.8 0.8</background_color>
+        <camera_pose>-6 0 6 0 0.5 0</camera_pose><!--GUI 初始相机位置和朝向-->
+        <camera_clip>
+          <near>0.25</near>
+          <far>25000</far>
+        </camera_clip><!--相机的裁剪范围即相机只能显示最近0.25m的物体，最远可以看到25000m的物体-->
+      </plugin>
+      <!-- Plugins that add functionality to the scene -->
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
+      <!--https://gazebosim.org/api/sim/10/classgz_1_1sim_1_1EntityContextMenu.html
+        在实体中选中显示上下文关系-->
+        <gz-gui>
+          <property key="state" type="string">floating</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager">
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="InteractiveViewControl" name="Interactive view control">
+      <!--插件允许用户可以直接使用鼠标控制摄像头
+        参考文档https://gazebosim.org/api/gui/10/classplugins_1_1InteractiveViewControl.html-->
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="CameraTracking" name="Camera Tracking">
+      <!--让 Gazebo 的 3D 视图相机自动锁定、跟随场景中的机器人 / 模型 / 实体运动
+      https://gazebosim.org/api/gui/6/classignition_1_1gui_1_1plugins_1_1CameraTracking.html-->
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="MarkerManager" name="Marker manager">
+      <!-- 标记管理器：显示可视化标记（路径、坐标、箭头） -->
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="SelectEntities" name="Select Entities">
+      <!--实体选择：点击选中模型/链接 -->
+        <gz-gui>
+          <anchors target="Select entities">
+            <line own="right" target="right"/>
+            <line own="top" target="top"/>
+          </anchors>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="VisualizationCapabilities" name="Visualization Capabilities">
+      <!--可视化开关：显示/隐藏坐标系、碰撞体、关节 -->
+        <gz-gui>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="Spawn" name="Spawn Entities">
+      <!--生成模型：拖放模型到3D场景 -->
+        <gz-gui>
+          <anchors target="Select entities">
+            <line own="right" target="right"/>
+            <line own="top" target="top"/>
+          </anchors>
+          <property key="resizable" type="bool">false</property>
+          <property key="width" type="double">5</property>
+          <property key="height" type="double">5</property>
+          <property key="state" type="string">floating</property>
+          <property key="showTitleBar" type="bool">false</property>
+        </gz-gui>
+      </plugin>
+      <plugin name="World control" filename="WorldControl">
+      <!--仿真控制按钮 -->
+        <gz-gui>
+          <title>World control</title>
+          <property type="bool" key="showTitleBar">0</property>
+          <property type="bool" key="resizable">0</property>
+          <property type="double" key="height">72</property>
+          <property type="double" key="width">121</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+          <anchors target="3D View">
+            <line own="left" target="left"/>
+            <line own="bottom" target="bottom"/>
+          </anchors>
+        </gz-gui>
+        <play_pause>1</play_pause>
+        <step>1</step>
+        <start_paused>0</start_paused>
+      </plugin>
+      <plugin name="World stats" filename="WorldStats">
+        <gz-gui>
+          <title>World stats</title>
+          <property type="bool" key="showTitleBar">0</property>
+          <property type="bool" key="resizable">0</property>
+          <property type="double" key="height">110</property>
+          <property type="double" key="width">290</property>
+          <property type="double" key="z">1</property>
+          <property type="string" key="state">floating</property>
+          <anchors target="3D View">
+            <line own="right" target="right"/>
+            <line own="bottom" target="bottom"/>
+          </anchors>
+        </gz-gui>
+        <sim_time>1</sim_time>
+        <real_time>1</real_time>
+        <real_time_factor>1</real_time_factor>
+        <iterations>1</iterations>
+      </plugin>
+      <plugin name="Entity tree" filename="EntityTree"/>
+    </gui>
+
+    <!-- 1. 内嵌光照系统 -->
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- 2. 内嵌地面 -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 3. 电厂模型 -->
+    <include>
+  <uri>model://power-plant</uri>
+  <name>power_plant_env</name>
+  <pose>10 10 0 0 0 0</pose>
+    </include>
+
+<model name="particle_environment">
+  <static>true</static>
+  <link name="emitter_link">
+    <particle_emitter name="smoke_emitter" type="cylinder">
+      <pose>5 10 8 0 0 0</pose>
+      <size>10 10 15</size>
+      <rate>8</rate>
+      <particle_size>0.03 0.03 0.03</particle_size>
+      <lifetime>20</lifetime>
+      <min_velocity>0.03</min_velocity>
+      <max_velocity>0.08</max_velocity>
+      <color_start>0.2 0.2 0.2 0.06</color_start>
+      <color_end>0.2 0.2 0.2 0.0</color_end>
+      <scale_rate>0.0</scale_rate>
+    </particle_emitter>
+  </link>
+</model>
+
+    <gravity>0 0 -9.8066</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+
+  </world>
+</sdf>
